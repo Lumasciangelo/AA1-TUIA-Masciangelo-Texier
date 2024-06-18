@@ -4,7 +4,7 @@ import joblib
 
 st.title('Rainfall dataset predictions')
 
-pipeline_entrenado = joblib.load('C:\AA1\AA1-TUIA-MASCIANGELO-TEXIER\Rainfall_pipeline.joblib')
+pipeline_entrenado = joblib.load('C:\AA1\AA1-TUIA-MASCIANGELO-TEXIER\pipeline.joblib')
 
 Date = st.date_input('Date','2008/12/01','2017/06/24', )
 MaxTemp = st.slider('MaxTemp', -8.5, 34.0, 12.2)

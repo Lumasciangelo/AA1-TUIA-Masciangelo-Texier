@@ -1,5 +1,4 @@
 from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.base import BaseEstimator, TransformerMixin
 import pandas as pd
 import numpy as np
 
@@ -132,10 +131,11 @@ class ImputacionMedianaPorEstacion:
                 fila[variable] = self.medianas_por_estacion_train[variable][fila[self.variables]]
         return fila
 
-    def transform(self, df, variables):
+    def transform(self, df_train, df_test, variables):
         # Aplicar la función a cada fila del DataFrame
-        df = df.apply(lambda fila: self.transformar_fila(fila, variables), axis=1)
-        return df
+        df_train = df_train.apply(lambda fila: self.transformar_fila(fila, variables), axis=1)
+        df_test = df_test.apply(lambda fila: self.transformar_fila(fila, variables), axis=1)
+        return df_train, df_test
 
 
 class AgruparDireccionesViento:
@@ -152,28 +152,30 @@ class AgruparDireccionesViento:
         else:
             return "W"
 
-    def fit(self, X, y=None):
-        return self
+    def fit(self):
+        return self #este no se bien que va...
 
-    def transform(self, X):
+    def transform(self, df_train, df_test):
         for var in self.variables:
-            X[f'{var}_agr'] = X[var].apply(lambda x: self.determinar_viento(x))
-            X = X.drop(var, axis=1)
-        return X
+            df_train[f'{var}_agr'] = df_train[var].apply(lambda x: self.determinar_viento(x))
+            df_train = df_train.drop(var, axis=1)
+            df_test[f'{var}_agr'] = df_test[var].apply(lambda x: self.determinar_viento(x))
+            df_test = df_test.drop(var, axis=1)
+        return df_train, df_test
 
 class CrearDummies:
     def __init__(self, variables):
         self.variables = variables
 
-    def fit(self, X, y=None):
+    def fit(self, df_train, df_test):
         return self
 
-    def transform(self, X):
+    def transform(self, df_train):
         for var in self.variables:
-            dummies = pd.get_dummies(X[var], prefix=var, drop_first=True)
-            X = X.drop(var, axis=1)
-            X = pd.concat([X, dummies], axis=1)
-        return X
+            dummies = pd.get_dummies(df_train[var], prefix=var, drop_first=True)
+            df_train = df_train.drop(var, axis=1)
+            df_train = pd.concat([df_train, dummies], axis=1)
+        return df_train
 
 class CrearDiferenciasYEliminar:
     def __init__(self, pares_columnas):
