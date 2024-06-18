@@ -13,7 +13,7 @@
 #### Generamos dummies para las variables categoricas 
 #### Eliminamos la variable estacion 
 #### Una funcion que haga la diferencia de temp, presion, etc. Y que elimine todas las variables que no va a usar
-## Estandarizar con standarscaler
+#### Estandarizar con standarscaler
 
 ## Para clasificación: eliminar rainfalltomorrow, usamos randomforestregressor, 
 ## Para regresion lineal: eliminar raintomorrow, usamos redes neuronales, 
@@ -27,6 +27,7 @@ df = pd.read_csv('weatherAUS.csv')
 # Las localidades que queremos evaluar son Adelaide, Canberra, Cobar, Dartmoor, Melbourne, MelbourneAirport, MountGambier, Sydney y SydneyAirport. El resto las eliminamos según el enunciado del tp
 categorias_importantes = [' Adelaide', 'Canberra', 'Cobar', 'Dartmoor', 'Melbourne', 'MelbourneAirport', 'MountGambier', 'Sydney', 'SydneyAirport' ]
 df_filtrado = df[df['Location'].isin(categorias_importantes)]
+df_filtrado = df_filtrado.drop(['Location', 'Unnamed: 0'], axis = 1)
 
 
 ## LLENAR CON LA MEDIANA POR DIA
