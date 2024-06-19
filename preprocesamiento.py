@@ -2,89 +2,41 @@ from sklearn.pipeline import Pipeline, FeatureUnion
 import pandas as pd
 import numpy as np
 
-class Data:
+class DataProcessor:
     def __init__(self, df):
-        self.df = pd.read_csv('df')
+        self.df = df
 
     def filter_locations(self):
-        locations_to_keep = [' Adelaide', 'Canberra', 'Cobar', 'Dartmoor', 'Melbourne', 'MelbourneAirport', 'MountGambier', 'Sydney', 'SydneyAirport' ]
-        df = self.df[self.df['Location'].isin(locations_to_keep)]
-        df = df.drop(['Location', 'Unnamed: 0'], axis=1)
-        return df
-        
-class ImputacionMedianaPorDia:
-    def __init__(self, variables):
-        self.variables = variables
+        locations_to_keep = ['Adelaide', 'Canberra', 'Cobar', 'Dartmoor', 'Melbourne', 'MelbourneAirport', 'MountGambier', 'Sydney', 'SydneyAirport']
+        self.df = self.df[self.df['Location'].isin(locations_to_keep)]
+        self.df = self.df.drop(['Location', 'Unnamed: 0'], axis=1)
 
-    def fit(self, df):
-        self.medianas_por_dia = {variable: df.groupby('Date')[variable].median() for variable in self.variables}
-        return self
+    def imputacion_mediana_por_dia(self, variables):
+        medianas_por_dia = {variable: self.df.groupby('Date')[variable].median() for variable in variables}
+        for variable in variables:
+            self.df[variable] = self.df.apply(lambda row: medianas_por_dia[variable][row['Date']] if pd.isnull(row[variable]) else row[variable], axis=1)
 
-    def transform(self, df):
-        for variable in self.variables:
-            df[variable] = df.apply(lambda row: self.medianas_por_dia[variable][row['Date']] if pd.isnull(row[variable]) else row[variable], axis=1)
-        return df
-    
+    def imputacion_maxima(self, variables):
+        maxima = np.maximum(self.df['WindSpeed3pm'], self.df['WindSpeed9am'])
+        for variable in variables:
+            self.df[variable] = self.df.apply(lambda row: maxima if pd.isnull(row[variable]) else row[variable], axis=1)
 
-class ImputacionMaxima:
-    def __init__(self, variables):
-        self.variables = variables
-        
-    def fit(self, df):
-        self.maxima = {variable: np.maximum(df['WindSpeed3pm'], df['WindSpeed9am']) for variable in self.variables}
-        return self
+    def imputacion_modas_por_dia(self, variables):
+        modas_por_dia = {variable: self.df.groupby('Date')[variable].apply(lambda x: x.mode().iloc[0] if not x.mode().empty else np.nan) for variable in variables}
+        for variable in variables:
+            self.df[variable] = self.df.apply(lambda row: modas_por_dia[variable][row['Date']] if pd.isnull(row[variable]) else row[variable], axis=1)
 
-    def transform(self, df):
-        for variable in self.variables:
-            df[variable] = df.apply(lambda row: self.maxima[variable] if pd.isnull(row[variable]) else row[variable], axis=1)
-        return df
+    def imputacion_winddir9am(self, variable):
+        self.df.loc[self.df[variable].isna(), 'WindDir9am'] = self.df.loc[self.df[variable].isna(), 'WindGustDir']
 
+    def imputacion_windgustdir(self, variable):
+        self.df[variable].fillna('N', inplace=True)
 
-class ImputacionModasPorDia:
-    def __init__(self, variables):
-        self.variables = variables
+    def convertir_a_datetime(self, date_column):
+        self.df[date_column] = pd.to_datetime(self.df[date_column])
 
-    def fit(self, df):
-        self.modas_por_dia = {variable: df.groupby('Date')[variable].mode() for variable in self.variables}
-        return self
-
-    def transform(self, df):
-        for variable in self.variables:
-            df[variable] = df.apply(lambda row: self.modas_por_dia[variable][row['Date']] if pd.isnull(row[variable]) else row[variable], axis=1)
-        return df
-    
-
-class ImputacionWindDir9am:
-    def __init__(self, variables):
-        self.variables = variables
-
-    def transform(self, df):
-        df.loc[df[self.variables].isna, 'WindDir9am'] = df.loc[df[self.variables].isna(), 'WindGustDir']
-        return df
-
-
-class ImputacionWindGustDir:
-    def __init__(self, variables):
-        self.variables = variables
-
-    def transform(self, df):
-        df[self.variables].fillna('N', inplace=True)
-        return df
-    
-
-class DeterminarEstacion:
-    def __init__(self, variables):
-        self.variables = variables
-
-    def convertir_a_datetime(self, df):
-        # Convertir la columna de fechas a tipo datetime
-        df[self.variables] = pd.to_datetime(df[self.variables])
-        return df
-    
-    def determinar_estacion(self):
-        # Extraer el mes
-        mes = self.variables.month
-        # Determinar la estación
+    def determinar_estacion(self, date):
+        mes = date.month
         if 3 <= mes <= 5:
             return "Otoño"
         elif 6 <= mes <= 8:
@@ -93,27 +45,31 @@ class DeterminarEstacion:
             return "Primavera"
         else:
             return "Verano"
-    
-    def asignar_estacion(self, df):
-        # Aplicar la función determinar_estacion al DataFrame
-        df['Estacion'] = df[self.date_column].apply(lambda x: self.determinar_estacion(x))
-        return df
 
+    def asignar_estacion(self, date_column):
+        self.df['Estacion'] = self.df[date_column].apply(self.determinar_estacion)
 
-class TrainTest:
-    def __init__(self, variable, split_date):
-        self.variable = variable
-        self.split_date = pd.to_datetime(split_date)
-
-    def division(self, df):
-        # Convertir la columna de fechas a tipo datetime si no lo está
-        df[self.variable] = pd.to_datetime(df[self.variable])
+    def process(self):
+        # Filter locations
+        self.filter_locations()
         
-        # Dividir el DataFrame en conjuntos de entrenamiento y prueba
-        df_train = df.loc[df[self.variable] < self.split_date]
-        df_test = df.loc[df[self.variable] >= self.split_date]
+        # Imputations
+        mediana_variables = ['Temp9am', 'Temp3pm', 'Humidity9am', 'Humidity3pm']
+        maxima_variables = ['WindSpeed9am', 'WindSpeed3pm']
+        moda_variables = ['RainToday', 'RainTomorrow']
         
-        return df_train, df_test
+        self.imputacion_mediana_por_dia(mediana_variables)
+        self.imputacion_maxima(maxima_variables)
+        self.imputacion_modas_por_dia(moda_variables)
+        
+        self.imputacion_winddir9am('WindDir9am')
+        self.imputacion_windgustdir('WindGustDir')
+        
+        # Convert date and assign season
+        self.convertir_a_datetime('Date')
+        self.asignar_estacion('Date')
+        
+        return self.df
 
 
 class ImputacionMedianaPorEstacion:
@@ -131,11 +87,10 @@ class ImputacionMedianaPorEstacion:
                 fila[variable] = self.medianas_por_estacion_train[variable][fila[self.variables]]
         return fila
 
-    def transform(self, df_train, df_test, variables):
+    def transform(self, df_train, variables):
         # Aplicar la función a cada fila del DataFrame
         df_train = df_train.apply(lambda fila: self.transformar_fila(fila, variables), axis=1)
-        df_test = df_test.apply(lambda fila: self.transformar_fila(fila, variables), axis=1)
-        return df_train, df_test
+        return df_train
 
 
 class AgruparDireccionesViento:
@@ -155,19 +110,17 @@ class AgruparDireccionesViento:
     def fit(self):
         return self #este no se bien que va...
 
-    def transform(self, df_train, df_test):
+    def transform(self, df_train):
         for var in self.variables:
             df_train[f'{var}_agr'] = df_train[var].apply(lambda x: self.determinar_viento(x))
             df_train = df_train.drop(var, axis=1)
-            df_test[f'{var}_agr'] = df_test[var].apply(lambda x: self.determinar_viento(x))
-            df_test = df_test.drop(var, axis=1)
-        return df_train, df_test
+        return df_train
 
 class CrearDummies:
     def __init__(self, variables):
         self.variables = variables
 
-    def fit(self, df_train, df_test):
+    def fit(self, df_train):
         return self
 
     def transform(self, df_train):
@@ -181,12 +134,21 @@ class CrearDiferenciasYEliminar:
     def __init__(self, pares_columnas):
         self.pares_columnas = pares_columnas
 
-    def fit(self, X, y=None):
+    def fit(self, df_train, y=None):
         return self
 
-    def transform(self, X):
+    def transform(self, df_train):
         for col1, col2 in self.pares_columnas:
             diff_col_name = f'{col1}_menos_{col2}'
             X[diff_col_name] = X[col1] - X[col2]
             X = X.drop([col1, col2], axis=1)
         return X
+
+class DropColumns:
+    def __init__(self, variables):
+        self.variables = variables 
+
+    def eliminar(self, df_train):
+
+## Eliminar date y estacion 
+## estandarizar
