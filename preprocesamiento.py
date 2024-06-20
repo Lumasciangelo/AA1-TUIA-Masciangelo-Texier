@@ -59,9 +59,10 @@ class DataProcessor:
         
         # Imputations
         mediana_variables = ['Evaporation', 'Rainfall', 'Sunshine', 'WindGustSpeed', 'WindSpeed9am', 'WindSpeed3pm', 
-                       'Humidity9am', 'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Temp9am', 'Temp3pm', 'Cloud9am', 'Cloud3pm']
+                       'Humidity9am', 'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Temp9am', 'Temp3pm', 'Cloud9am', 'Cloud3pm',
+                       'RainfallTomorrow']
         maxima_variables = ['WindGustSpeed']
-        moda_variables = ['WindGustDir', 'WindDir9am', 'WindDir3pm', 'RainToday']
+        moda_variables = ['WindGustDir', 'WindDir9am', 'WindDir3pm', 'RainToday', 'RainTomorrow']
         
         self.imputacion_mediana_por_dia(mediana_variables)
         self.imputacion_maxima(maxima_variables)
@@ -298,15 +299,16 @@ class DropColumns:
 #         return history
     
 class RedNeuronalClass:
-    def __init__(self, epochs=13, batch_size=32):
+    def __init__(self, input_dim=20, epochs=13, batch_size=32):
+        self.input_dim = input_dim
         self.epochs = epochs
         self.batch_size = batch_size
         self.model = None
 
     def build_model(self):
         model = Sequential()
-        model.add(Dense(38, activation='relu', input_shape=(X.shape[1],)))  # Ajusta el input_shape según tus datos
-        model.add(Dense(1, activation='sigmoid'))  # Capa de salida con 1 neurona y función de activación sigmoid
+        model.add(Dense(38, activation='relu', input_shape=(self.input_dim,)))
+        model.add(Dense(1, activation='sigmoid'))
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
         return model
 
@@ -314,8 +316,5 @@ class RedNeuronalClass:
         self.model = self.build_model()
         self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.2)
         return self
-
-    def predict(self, X):
-        return self.model.predict(X).flatten()  # Asegurarse de que la salida es una dimensión adecuada
 
 
