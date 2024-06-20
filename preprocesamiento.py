@@ -73,29 +73,32 @@ class DataProcessor:
 
 
 class ImputacionMedianaPorEstacion:
-    def __init__(self, variables):
+    def __init__(self, df_train, variables):
+        self.df_train = df_train
         self.variables = variables
-        self.medianas_por_estacion_train = {}
+        self.medianas_por_estacion_train = self._calcular_medianas()
 
-    def fit(self, df_train, variables):
+    def _calcular_medianas(self):
         # Calcular la mediana para cada variable por cada grupo en la columna 'Estacion' en el conjunto de entrenamiento
-        self.medianas_por_estacion_train = {variable: df_train.groupby(self.variables)[variable].median() for variable in variables}
+        medianas_por_estacion_train = {variable: self.df_train.groupby('Estacion')[variable].median() for variable in self.variables}
+        return medianas_por_estacion_train
 
-    def transformar_fila(self, fila, variables):
-        for variable in variables:
+    def _llenar_faltantes_mediana_por_estacion(self, fila):
+        for variable in self.variables:
             if pd.isnull(fila[variable]):
-                fila[variable] = self.medianas_por_estacion_train[variable][fila[self.variables]]
+                fila[variable] = self.medianas_por_estacion_train[variable][fila['Estacion']]
         return fila
 
-    def transform(self, df_train, variables):
-        # Aplicar la función a cada fila del DataFrame
-        df_train = df_train.apply(lambda fila: self.transformar_fila(fila, variables), axis=1)
-        return df_train
+    def imputar(self):
+        # Aplicar la función a cada fila del conjunto de entrenamiento
+        self.df_train = self.df_train.apply(lambda fila: self._llenar_faltantes_mediana_por_estacion(fila), axis=1)
+        return self.df_train
 
 
 class AgruparDireccionesViento:
-    def __init__(self, variables):
+    def __init__(self, variables, df_train):
         self.variables = variables
+        self.df_train = df_train
 
     def determinar_viento(self, viento):
         if viento in ["NE", "ENE", "ESE"]:
@@ -107,48 +110,72 @@ class AgruparDireccionesViento:
         else:
             return "W"
 
-    def fit(self):
-        return self #este no se bien que va...
-
-    def transform(self, df_train):
+    def transform(self):
         for var in self.variables:
-            df_train[f'{var}_agr'] = df_train[var].apply(lambda x: self.determinar_viento(x))
-            df_train = df_train.drop(var, axis=1)
-        return df_train
+            self.df_train[f'{var}_agr'] = self.df_train[var].apply(self.determinar_viento)
+            self.df_train.drop(columns=[var], inplace=True)
+        return self.df_train
 
-class CrearDummies:
-    def __init__(self, variables):
-        self.variables = variables
+class GenerarDummies:
+    def __init__(self, df_train, columnas_multiple, columnas_simple):
+        self.df_train = df_train
+        self.columnas_multiple = columnas_multiple
+        self.columnas_simple = columnas_simple
 
-    def fit(self, df_train):
-        return self
+    def generar_dummies(self):
+        # Procesar columnas que tienen múltiples variables relacionadas (ej: WindGustDir)
+        for col_base in self.columnas_multiple:
+            # Crear dummies para cada variable base en el conjunto de entrenamiento
+            dummies_train = pd.get_dummies(self.df_train[f'{col_base}_dummie'], dtype=int, drop_first=True)
+            
+            # Renombrar las columnas dummies para agregar el prefijo de la columna base
+            dummies_train = dummies_train.rename(columns=lambda x: f'{col_base}_{x}')
+            
+            # Eliminar las columnas originales y las agregadas por la función agrupar_direcciones_viento
+            self.df_train = self.df_train.drop([col_base, f'{col_base}_dummie'], axis=1)
+            
+            # Concatenar las dummies con el DataFrame original
+            self.df_train = pd.concat([self.df_train, dummies_train], axis=1)
 
-    def transform(self, df_train):
-        for var in self.variables:
-            dummies = pd.get_dummies(df_train[var], prefix=var, drop_first=True)
-            df_train = df_train.drop(var, axis=1)
-            df_train = pd.concat([df_train, dummies], axis=1)
-        return df_train
+        # Procesar columnas que tienen un único valor categórico binario (ej: RainToday)
+        for col in self.columnas_simple:
+            dummies_train = pd.get_dummies(self.df_train[col], dtype=int, drop_first=True)
+            
+            # Renombrar la columna dummy a simplemente el nombre de la variable original
+            dummies_train = dummies_train.rename(columns={'Yes': f'{col}_Yes'})
+            
+            # Eliminar las columnas originales
+            self.df_train = self.df_train.drop(col, axis=1)
+            
+            # Concatenar las dummies con el DataFrame original
+            self.df_train = pd.concat([self.df_train, dummies_train], axis=1)
+        
+        return self.df_train
 
 class CrearDiferenciasYEliminar:
-    def __init__(self, pares_columnas):
+    def __init__(self, df_train, pares_columnas):
+        self.df_train = df_train
         self.pares_columnas = pares_columnas
 
-    def fit(self, df_train, y=None):
-        return self
-
-    def transform(self, df_train):
+    def crear_diferencias(self):
         for col1, col2 in self.pares_columnas:
+            # Crear la nueva columna de diferencia para el conjunto de entrenamiento
             diff_col_name = f'{col1}_menos_{col2}'
-            X[diff_col_name] = X[col1] - X[col2]
-            X = X.drop([col1, col2], axis=1)
-        return X
+            self.df_train[diff_col_name] = self.df_train[col1] - self.df_train[col2]
+            
+            # Eliminar las columnas originales
+            self.df_train = self.df_train.drop([col1, col2], axis=1)
+        
+        return self.df_train
 
 class DropColumns:
-    def __init__(self, variables):
-        self.variables = variables 
+    def __init__(self, variables, df_train):
+        self.variables = variables
+        self.df_train = df_train
 
-    def eliminar(self, df_train):
+    def eliminar(self):
+        self.df_train = self.df_train.drop(self.variables, axis=1)
+        return self.df_train
+    
 
-## Eliminar date y estacion 
 ## estandarizar
