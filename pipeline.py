@@ -5,7 +5,9 @@ import pandas as pd
 from preprocesamiento import ImputacionMedianaPorEstacion, AgruparDireccionesViento, GenerarDummies, CrearDiferenciasYEliminar
 from preprocesamiento import DataProcessor, DropColumns, CrearDiferenciasYEliminar, RedNeuronalClass
 import joblib
-import tensorflow as tf
+# import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
 
 
 # Usage
@@ -24,18 +26,30 @@ y_train_clasificacion = df_train['RainTomorrow']
 
 
 pipeline_clasificacion = Pipeline([
-        ('imputacion_mediana_por_estacion', ImputacionMedianaPorEstacion(X=x_train, variables=['MinTemp', 'MaxTemp'])),
-        ('agrupar_direcciones', AgruparDireccionesViento(X=x_train, variables=['WindGustDir', 'WindDir9am', 'WindDir3pm'])),
-        ('dummies', GenerarDummies(X= x_train, columnas_multiple = ['WindGustDir', 'WindDir9am', 'WindDir3pm'], columnas_simple= ['RainToday'])),
-        ('diferencias', CrearDiferenciasYEliminar(X= x_train, pares_columnas=[('Pressure9am', 'Pressure3pm'), ('WindSpeed9am', 'WindSpeed3pm'), ('MaxTemp', 'MinTemp'), ('Temp3pm', 'Temp9am'), ('Humidity9am', 'Humidity3pm')])),
-        ('eliminar', DropColumns(X=x_train, variables=['Date', 'Estacion'])),
-        ('estandarizar', StandardScaler()),
-        ('red_neuronal_clasificacion',RedNeuronalClass())
+        ('eliminar', DropColumns(variables=['Date'])),
+        ('imputacion_mediana_por_estacion', ImputacionMedianaPorEstacion(variables=['MinTemp', 'MaxTemp'])),
+        ('agrupar_direcciones', AgruparDireccionesViento(variables=['WindGustDir', 'WindDir9am', 'WindDir3pm'])),
+        ('dummies', GenerarDummies(columnas_multiple = ['WindGustDir_agr', 'WindDir9am_agr', 'WindDir3pm_agr'], columnas_simple= ['RainToday'])),
+        ('diferencias', CrearDiferenciasYEliminar(pares_columnas=[('Pressure9am', 'Pressure3pm'), ('WindSpeed9am', 'WindSpeed3pm'), ('MaxTemp', 'MinTemp'), ('Temp3pm', 'Temp9am'), ('Humidity9am', 'Humidity3pm')])),
+        # ('estandarizar', StandardScaler())
+        # ('red_neuronal_clasificacion',RedNeuronalClass())
     ])
     #return pipeline
 
 #modelo clasificación
-pipeline_clasificacion.fit(x_train, y_train_clasificacion, epochs=13, batch_size=32)
+
+# Supongamos que x_train es tu DataFrame de entrenamiento
+pipeline_clasificacion.fit(x_train)
+
+# Transformar los datos y verificar
+x_train_transformed = pipeline_clasificacion.transform(x_train)
+
+print("DataFrame transformado:")
+print(x_train_transformed)
+x_train_transformed.info()
+
+pipeline_clasificacion.fit(x_train, y_train_clasificacion)
+
 joblib.dump(pipeline_clasificacion, 'pipeline_clas.joblib')
 
 pipeline_regresion = Pipeline([
@@ -53,3 +67,4 @@ pipeline_regresion = Pipeline([
 pipeline_regresion.fit(x_train, y_train_regresion)
 
 joblib.dump(pipeline_regresion, 'pipeline_res.joblib')
+
