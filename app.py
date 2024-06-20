@@ -4,7 +4,23 @@ import joblib
 
 st.title('Rainfall dataset predictions')
 
-pipeline_entrenado = joblib.load('C:\AA1\AA1-TUIA-MASCIANGELO-TEXIER\pipeline.joblib')
+joblib_file = r'C:\AA1\AA1-TUIA-MASCIANGELO-TEXIER\pipeline_clas.joblib'
+try:
+    pipeline_entrenado_clas = joblib.load(joblib_file)
+    print('Pipeline cargado exitosamente')
+except FileNotFoundError:
+    print(f"El archivo {joblib_file} no existe")
+except Exception as e:
+    print(f"Ocurrió un error al cargar el papeline: {e}")
+
+joblib_file2 = r'C:\AA1\AA1-TUIA-MASCIANGELO-TEXIER\pipeline_reg.joblib'
+try:
+    pipeline_entrenado_reg = joblib.load(joblib_file2)
+    print('Pipeline cargado exitosamente')
+except FileNotFoundError:
+    print(f"El archivo {joblib_file2} no existe")
+except Exception as e:
+    print(f"Ocurrií un error al cargar el papeline: {e}")
 
 Date = st.date_input('Date','2008/12/01','2017/06/24', )
 MaxTemp = st.slider('MaxTemp', -8.5, 34.0, 12.2)
@@ -47,6 +63,8 @@ data_para_predecir = np.array([[Date, MaxTemp, MinTemp, Rainfall, Evaporation, S
                                 Humidity9am, Humidity3pm, Pressure9am, Pressure3pm, Cloud9am, Cloud3pm,
                                 Temp9am, Temp3pm, Location, RainToday]])
 
-prediccion = pipeline_entrenado.predict(data_para_predecir)
+prediccion_clas = pipeline_entrenado_clas.predict(data_para_predecir)
 
-st.write('Predicción:', prediccion)
+prediccion_reg = pipeline_entrenado_reg.predict(data_para_predecir)
+
+st.write(f"{'Predicción clasificación:', prediccion_clas}\n{'Predicción regresión:', prediccion_reg}")
