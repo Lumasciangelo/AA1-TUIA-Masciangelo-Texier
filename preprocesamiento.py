@@ -1,9 +1,10 @@
 from sklearn.pipeline import Pipeline, FeatureUnion
 import pandas as pd
 import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin
 # import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+#from tensorflow.keras.models import Sequential
+#from tensorflow.keras.layers import Dense
 
 
 class DataProcessor:
@@ -78,29 +79,8 @@ class DataProcessor:
         return self.df
 
 
-# class ImputacionMedianaPorEstacion:
-#     def __init__(self, X, variables, y= None):
-#         self.X = X
-#         self.variables = variables
-#         self.medianas_por_estacion_train = self._calcular_medianas()
 
-#     def _calcular_medianas(self):
-#         # Calcular la mediana para cada variable por cada grupo en la columna 'Estacion' en el conjunto de entrenamiento
-#         medianas_por_estacion_train = {variable: self.X.groupby('Estacion')[variable].median() for variable in self.variables}
-#         return medianas_por_estacion_train
-
-#     def _llenar_faltantes_mediana_por_estacion(self, fila):
-#         for variable in self.variables:
-#             if pd.isnull(fila[variable]):
-#                 fila[variable] = self.medianas_por_estacion_train[variable][fila['Estacion']]
-#         return fila
-
-#     def imputar(self):
-#         # Aplicar la función a cada fila del conjunto de entrenamiento
-#         self.df_train = self.X.apply(lambda fila: self._llenar_faltantes_mediana_por_estacion(fila), axis=1)
-#         return self.X
-
-class ImputacionMedianaPorEstacion:
+class ImputacionMedianaPorEstacion(BaseEstimator, TransformerMixin):
     def __init__(self, variables):
         self.variables = variables
         self.medianas_por_estacion_train = {}
@@ -117,28 +97,7 @@ class ImputacionMedianaPorEstacion:
         return X_copy.drop(columns=['Estacion'])
 
 
-# class AgruparDireccionesViento:
-#     def __init__(self, variables, X, y=None):
-#         self.variables = variables
-#         self.X = X
-
-#     def determinar_viento(self, viento):
-#         if viento in ["NE", "ENE", "ESE"]:
-#             return "E"
-#         elif viento in ["SSE", "SE", "SSW"]:
-#             return "S"
-#         elif viento in ["NNE", "NNW", "NW"]:
-#             return "N"
-#         else:
-#             return "W"
-
-#     def transform(self):
-#         for var in self.variables:
-#             self.X[f'{var}_agr'] = self.X[var].apply(self.determinar_viento)
-#             self.X.drop(columns=[var], inplace=True)
-#         return self.X
-
-class AgruparDireccionesViento:
+class AgruparDireccionesViento(BaseEstimator, TransformerMixin):
     def __init__(self, variables):
         self.variables = variables
 
@@ -162,43 +121,8 @@ class AgruparDireccionesViento:
             X_copy.drop(columns=[var], inplace=True)
         return X_copy
 
-# class GenerarDummies:
-#     def __init__(self, X, columnas_multiple, columnas_simple, y= None):
-#         self.X = X
-#         self.columnas_multiple = columnas_multiple
-#         self.columnas_simple = columnas_simple
 
-#     def generar_dummies(self):
-#         # Procesar columnas que tienen múltiples variables relacionadas (ej: WindGustDir)
-#         for col_base in self.columnas_multiple:
-#             # Crear dummies para cada variable base en el conjunto de entrenamiento
-#             dummies_train = pd.get_dummies(self.X[f'{col_base}_dummie'], dtype=int, drop_first=True)
-            
-#             # Renombrar las columnas dummies para agregar el prefijo de la columna base
-#             dummies_train = dummies_train.rename(columns=lambda x: f'{col_base}_{x}')
-            
-#             # Eliminar las columnas originales y las agregadas por la función agrupar_direcciones_viento
-#             self.X = self.X.drop([col_base, f'{col_base}_dummie'], axis=1)
-            
-#             # Concatenar las dummies con el DataFrame original
-#             self.X = pd.concat([self.X, dummies_train], axis=1)
-
-#         # Procesar columnas que tienen un único valor categórico binario (ej: RainToday)
-#         for col in self.columnas_simple:
-#             dummies_train = pd.get_dummies(self.X[col], dtype=int, drop_first=True)
-            
-#             # Renombrar la columna dummy a simplemente el nombre de la variable original
-#             dummies_train = dummies_train.rename(columns={'Yes': f'{col}_Yes'})
-            
-#             # Eliminar las columnas originales
-#             self.df_train = self.X.drop(col, axis=1)
-            
-#             # Concatenar las dummies con el DataFrame original
-#             self.X = pd.concat([self.X, dummies_train], axis=1)
-        
-#         return self.X
-
-class GenerarDummies:
+class GenerarDummies(BaseEstimator, TransformerMixin):
     def __init__(self, columnas_multiple, columnas_simple):
         self.columnas_multiple = columnas_multiple
         self.columnas_simple = columnas_simple
@@ -223,24 +147,8 @@ class GenerarDummies:
 
         return X_copy
 
-# class CrearDiferenciasYEliminar:
-#     def __init__(self, X, pares_columnas, y=None):
-#         self.X = X
-#         self.pares_columnas = pares_columnas
 
-#     def crear_diferencias(self):
-#         for col1, col2 in self.pares_columnas:
-#             # Crear la nueva columna de diferencia para el conjunto de entrenamiento
-#             diff_col_name = f'{col1}_menos_{col2}'
-#             self.X[diff_col_name] = self.X[col1] - self.X[col2]
-            
-#             # Eliminar las columnas originales
-#             self.X = self.X.drop([col1, col2], axis=1)
-        
-#         return self.X
-
-
-class CrearDiferenciasYEliminar:
+class CrearDiferenciasYEliminar(BaseEstimator, TransformerMixin):
     def __init__(self, pares_columnas):
         self.pares_columnas = pares_columnas
 
@@ -256,16 +164,7 @@ class CrearDiferenciasYEliminar:
         return X_copy
 
 
-# class DropColumns:
-#     def __init__(self, variables, X, y=None):
-#         self.variables = variables
-#         self.X = X
-
-#     def eliminar(self):
-#         self.X = self.X.drop(self.variables, axis=1)
-#         return self.X
-
-class DropColumns:
+class DropColumns(BaseEstimator, TransformerMixin):
     def __init__(self, variables):
         self.variables = variables
 

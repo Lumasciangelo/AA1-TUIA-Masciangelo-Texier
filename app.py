@@ -7,27 +7,9 @@ import pandas as pd
 
 st.title('Rainfall dataset predictions')
 
-joblib_file = r'C:\AA1\AA1-TUIA-MASCIANGELO-TEXIER\pipeline_clas.joblib'
-try:
-    pipeline_entrenado_clas = joblib.load(joblib_file)
-    print('Pipeline cargado exitosamente')
-except FileNotFoundError:
-    print(f"El archivo {joblib_file} no existe")
-except Exception as e:
-    print(f"Ocurrió un error al cargar el papeline: {e}")
-
-joblib_file2 = r'C:\Users\Usuario\Documents\GitHub\AA1-TUIA-Masciangelo-Texier\pipeline_res.joblib'
-try:
-    pipeline_entrenado_reg = joblib.load(joblib_file2)
-    print('Pipeline cargado exitosamente')
-except FileNotFoundError:
-    print(f"El archivo {joblib_file2} no existe")
-except Exception as e:
-    print(f"Ocurrió un error al cargar el papeline: {e}")
-
 # Definir el rango de fechas permitido
-min_date = datetime(2017, 6, 24)
-max_date = datetime(2026, 5, 11)
+min_date = datetime(2008, 1, 20)
+max_date = datetime(2017, 6, 24)
 
 # Crear un widget de entrada de fecha
 Date = st.date_input('Selecciona una fecha', value=min_date, min_value=min_date, max_value=max_date)
@@ -65,37 +47,55 @@ Location = st.multiselect('Location',['Albury', 'BadgerysCreek', 'Cobar', 'Coffs
        'Perth', 'SalmonGums', 'Walpole', 'Hobart', 'Launceston',
        'AliceSprings', 'Darwin', 'Katherine', 'Uluru'])
 RainToday = st.multiselect('Raintoday', ['Yes', 'No'])
-WindGustDir_agr_N = st.multiselect('WindGustDir_agr_N', [1, 0])
-WindGustDir_agr_S = st.multiselect('WindGustDir_agr_S', [1, 0])
-WindGustDir_agr_W = st.multiselect('WindGustDir_agr_W', [1, 0])
-WindDir9am_agr_N = st.multiselect('WindDir9am_agr_N', [1, 0])
-WindDir9am_agr_S = st.multiselect('WindDir9am_agr_S', [1, 0])
-WindDir9am_agr_W = st.multiselect('WindDir9am_agr_W', [1, 0])
-WindDir3pm_agr_N = st.multiselect('WindDir3pm_agr_N', [1, 0])
-WindDir3pm_agr_S = st.multiselect('WindDir3pm_agr_S', [1, 0])
-WindDir3pm_agr_W = st.multiselect('WindDir3pm_agr_W', [1, 0])
-RainToday_Yes = st.multiselect('RainToday_Yes', [1, 0])
-Pressure9am_menos_Pressure3pm = st.slider('Pressure9am_menos_Pressure3pm', 0.0, 71.0, 21.7)
-WindSpeed9am_menos_WindSpeed3pm = st.slider('WindSpeed9am_menos_WindSpeed3pm', 0.0, 130.0, 21.7)
-MaxTemp_menos_MinTemp = st.slider('MaxTemp_menos_MinTemp', -8.5, 49.0, 21.7)
-Temp3pm_menos_Temp9am = st.slider('Temp3pm_menos_Temp9am', -8.5, 49.0, 21.7)
-Humidity9am_menos_Humidity3pm = st.slider('Humidity9am_menos_Humidity3pm', 0.0, 100.0, 50.7)
+# WindGustDir_agr_N = st.multiselect('WindGustDir_agr_N', [1, 0])
+# WindGustDir_agr_S = st.multiselect('WindGustDir_agr_S', [1, 0])
+# WindGustDir_agr_W = st.multiselect('WindGustDir_agr_W', [1, 0])
+# WindDir9am_agr_N = st.multiselect('WindDir9am_agr_N', [1, 0])
+# WindDir9am_agr_S = st.multiselect('WindDir9am_agr_S', [1, 0])
+# WindDir9am_agr_W = st.multiselect('WindDir9am_agr_W', [1, 0])
+# WindDir3pm_agr_N = st.multiselect('WindDir3pm_agr_N', [1, 0])
+# WindDir3pm_agr_S = st.multiselect('WindDir3pm_agr_S', [1, 0])
+# WindDir3pm_agr_W = st.multiselect('WindDir3pm_agr_W', [1, 0])
+# RainToday_Yes = st.multiselect('RainToday_Yes', [1, 0])
+# Pressure9am_menos_Pressure3pm = st.slider('Pressure9am_menos_Pressure3pm', 0.0, 71.0, 21.7)
+# WindSpeed9am_menos_WindSpeed3pm = st.slider('WindSpeed9am_menos_WindSpeed3pm', 0.0, 130.0, 21.7)
+# MaxTemp_menos_MinTemp = st.slider('MaxTemp_menos_MinTemp', -8.5, 49.0, 21.7)
+# Temp3pm_menos_Temp9am = st.slider('Temp3pm_menos_Temp9am', -8.5, 49.0, 21.7)
+# Humidity9am_menos_Humidity3pm = st.slider('Humidity9am_menos_Humidity3pm', 0.0, 100.0, 50.7)
 
 
 
-data_para_predecir = pd.DataFrame([[Rainfall, Evaporation, Sunshine, WindGustDir, 
-                                RainToday, Cloud9am, Cloud3pm, WindGustDir_agr_N, WindGustDir_agr_S, WindGustDir_agr_W,
-                                WindDir9am_agr_N, WindDir9am_agr_S, WindDir9am_agr_W, WindDir3pm_agr_N,
-                                WindDir3pm_agr_S, WindDir3pm_agr_W, RainToday_Yes, Pressure9am_menos_Pressure3pm, 
-                                WindSpeed9am_menos_WindSpeed3pm, MaxTemp_menos_MinTemp, Temp3pm_menos_Temp9am, 
-                                Humidity9am_menos_Humidity3pm]])
+#data_para_predecir = pd.DataFrame([[Rainfall, Evaporation, Sunshine, WindGustDir, 
+                                # RainToday, Cloud9am, Cloud3pm, WindGustDir_agr_N, WindGustDir_agr_S, WindGustDir_agr_W,
+                                # WindDir9am_agr_N, WindDir9am_agr_S, WindDir9am_agr_W, WindDir3pm_agr_N,
+                                # WindDir3pm_agr_S, WindDir3pm_agr_W, RainToday_Yes, Pressure9am_menos_Pressure3pm, 
+                                # WindSpeed9am_menos_WindSpeed3pm, MaxTemp_menos_MinTemp, Temp3pm_menos_Temp9am, 
+                                # Humidity9am_menos_Humidity3pm]])
 
-# data_para_predecir = np.array([[Date, MaxTemp, MinTemp, Rainfall, Evaporation, Sunshine, WindGustDir, 
-#                                 WindGustSpeed, WindDir9am, WindDir3pm, WindSpeed9am, WindSpeed3pm,
-#                                 Humidity9am, Humidity3pm, Pressure9am, Pressure3pm, Cloud9am, Cloud3pm,
-#                                 Temp9am, Temp3pm, Location, RainToday]])
+data_para_predecir = pd.DataFrame([['Date', 'MaxTemp', 'MinTemp', 'Rainfall', 'Evaporation', 'Sunshine', 'WindGustDir', 
+                                 'WindGustSpeed', 'WindDir9am', 'WindDir3pm', 'WindSpeed9am', 'WindSpeed3pm',
+                                 'Humidity9am', 'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
+                                 'Temp9am', 'Temp3pm', 'RainToday']])
+
+joblib_file = r'C:\Users\u631832\Documents\Juli\Archivos inteligencia artificial\AA1\AA1-TUIA-Masciangelo-Texier\pipeline_clas.joblib'
+try:
+    pipeline_entrenado_clas = joblib.load(joblib_file)
+    print('Pipeline cargado exitosamente')
+except FileNotFoundError:
+    print(f"El archivo {joblib_file} no existe")
+except Exception as e:
+    print(f"Ocurrió un error al cargar el papeline: {e}")
 
 prediccion_clas = pipeline_entrenado_clas.predict(data_para_predecir)
+
+joblib_file2 = r'C:\Users\Usuario\Documents\GitHub\AA1-TUIA-Masciangelo-Texier\pipeline_res.joblib'
+try:
+    pipeline_entrenado_reg = joblib.load(joblib_file2)
+    print('Pipeline cargado exitosamente')
+except FileNotFoundError:
+    print(f"El archivo {joblib_file2} no existe")
+except Exception as e:
+    print(f"Ocurrió un error al cargar el papeline: {e}")
 
 prediccion_reg = pipeline_entrenado_reg.predict(data_para_predecir)
 
