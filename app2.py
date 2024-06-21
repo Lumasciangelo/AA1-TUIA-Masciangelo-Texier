@@ -3,6 +3,7 @@ import numpy as np
 import joblib
 from datetime import datetime
 import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
 
 
 st.title('Rainfall dataset predictions')
@@ -47,21 +48,6 @@ Location = st.selectbox('Location',['Albury', 'BadgerysCreek', 'Cobar', 'CoffsHa
        'Perth', 'SalmonGums', 'Walpole', 'Hobart', 'Launceston',
        'AliceSprings', 'Darwin', 'Katherine', 'Uluru'])
 RainToday = st.selectbox('Raintoday', ['Yes', 'No'])
-# WindGustDir_agr_N = st.multiselect('WindGustDir_agr_N', [1, 0])
-# WindGustDir_agr_S = st.multiselect('WindGustDir_agr_S', [1, 0])
-# WindGustDir_agr_W = st.multiselect('WindGustDir_agr_W', [1, 0])
-# WindDir9am_agr_N = st.multiselect('WindDir9am_agr_N', [1, 0])
-# WindDir9am_agr_S = st.multiselect('WindDir9am_agr_S', [1, 0])
-# WindDir9am_agr_W = st.multiselect('WindDir9am_agr_W', [1, 0])
-# WindDir3pm_agr_N = st.multiselect('WindDir3pm_agr_N', [1, 0])
-# WindDir3pm_agr_S = st.multiselect('WindDir3pm_agr_S', [1, 0])
-# WindDir3pm_agr_W = st.multiselect('WindDir3pm_agr_W', [1, 0])
-# RainToday_Yes = st.multiselect('RainToday_Yes', [1, 0])
-# Pressure9am_menos_Pressure3pm = st.slider('Pressure9am_menos_Pressure3pm', 0.0, 71.0, 21.7)
-# WindSpeed9am_menos_WindSpeed3pm = st.slider('WindSpeed9am_menos_WindSpeed3pm', 0.0, 130.0, 21.7)
-# MaxTemp_menos_MinTemp = st.slider('MaxTemp_menos_MinTemp', -8.5, 49.0, 21.7)
-# Temp3pm_menos_Temp9am = st.slider('Temp3pm_menos_Temp9am', -8.5, 49.0, 21.7)
-# Humidity9am_menos_Humidity3pm = st.slider('Humidity9am_menos_Humidity3pm', 0.0, 100.0, 50.7)
 
 # Crear un DataFrame con los datos ingresados por el usuario
 data_para_predecir = pd.DataFrame({
@@ -128,43 +114,96 @@ class DataStreamlit:
 df = data_para_predecir  # Replace with the actual path to your CSV file
 processor = DataStreamlit(df)
 processed_df = processor.process()
-processed_df.info()
 
-columns=['WindGustDir', 'WindDir9am', 'WindDir3pm']        
-for var in columns:
-    processed_df[f'{var}_agr'] = processed_df[var]
-    # processed_df.drop(columns=[var], inplace=True)
 
-processed_df['RainToday2'] = processed_df['RainToday']
+class AgruparDireccionesViento(BaseEstimator, TransformerMixin):
+    def __init__(self, variables):
+        self.variables = variables
 
-# Generar dummies para las columnas categóricas
-data_para_predecir_dummies = pd.get_dummies(processed_df, columns=['RainToday', 'WindGustDir_agr', 'WindDir9am_agr', 'WindDir3pm_agr'])
+    def determinar_viento(self, viento):
+        if viento in ["NE", "ENE", "ESE"]:
+            return "E"
+        elif viento in ["SSE", "SE", "SSW"]:
+            return "S"
+        elif viento in ["NNE", "NNW", "NW"]:
+            return "N"
+        else:
+            return "W"
 
-# Obtener todas las columnas dummy esperadas por el modelo
-dummy_columns = ['WindDir3pm_agr_N', 'WindDir3pm_agr_S', 'WindDir3pm_agr_W','WindDir9am_agr_N', 'WindDir9am_agr_S', 'WindDir9am_agr_W', 'WindGustDir_agr_N', 'WindGustDir_agr_S', 'WindGustDir_agr_W' ]
+    def fit(self, X, y=None):
+        return self
 
-data_para_predecir_dummies['RainToday'] = data_para_predecir_dummies['RainToday2']
-data_para_predecir_dummies = data_para_predecir_dummies.drop('RainToday2', axis=1)
+    def transform(self, X):
+        X_copy = X.copy()
+        for var in self.variables:
+            X_copy[f'{var}_agr'] = X_copy[var].apply(self.determinar_viento)
+            X_copy.drop(columns=[var], inplace=True)
+        return X_copy
 
-# Añadir las columnas dummy faltantes con valor 0
-for col in dummy_columns:
-    if col not in data_para_predecir_dummies.columns:
-        data_para_predecir_dummies[col] = 0
-    
-# data_para_predecir_dummies = data_para_predecir_dummies.drop(columns=['WindGustDir', 'WindDir9am', 'WindDir3pm'], axis=1)
-data_para_predecir_dummies.info()
+viento = AgruparDireccionesViento(variables=['WindGustDir', 'WindDir9am', 'WindDir3pm'])
+df_viento = viento.fit(processed_df)
+df_viento2 = df_viento.transform(processed_df)
+df_viento2.info()
 
-orden_columnas = ['MinTemp', 'MaxTemp', 'Rainfall', 'Evaporation', 'Sunshine', 'WindGustDir', 'WindDir9am',
-                   'WindDir3pm', 'WindSpeed9am', 'WindSpeed3pm', 
-    'Humidity9am', 'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm', 
-    'Temp9am', 'Temp3pm', 'RainToday', 'Estacion',
-    'WindGustDir_agr_N', 'WindGustDir_agr_S', 'WindGustDir_agr_W', 
-    'WindDir9am_agr_N', 'WindDir9am_agr_S', 'WindDir9am_agr_W', 'WindDir3pm_agr_N', 
-    'WindDir3pm_agr_S', 'WindDir3pm_agr_W', 'RainToday_Yes']
+class GenerarDummies(BaseEstimator, TransformerMixin):
+    def __init__(self, columnas_multiple, columnas_simple):
+        self.columnas_multiple = columnas_multiple
+        self.columnas_simple = columnas_simple
 
-# # Ordenar las columnas de acuerdo a lo esperado por el modelo
-data_para_predecir_dummies = data_para_predecir_dummies[orden_columnas]
+    def fit(self, X, y=None):
+        return self
 
+    def transform(self, X):
+        X_copy = X.copy()
+
+        # Procesar columnas que tienen múltiples variables relacionadas (ej: WindGustDir)
+        for col_base in self.columnas_multiple:
+            dummies_train = pd.get_dummies(X_copy[col_base], prefix=col_base, dtype=int, drop_first=True)
+            X_copy = pd.concat([X_copy, dummies_train], axis=1)
+            X_copy.drop(columns=[col_base], inplace=True)
+
+        # Procesar columnas que tienen un único valor categórico binario (ej: RainToday)
+        for col in self.columnas_simple:
+            dummies_train = pd.get_dummies(X_copy[col], prefix=col, dtype=int, drop_first=True)
+            X_copy = pd.concat([X_copy, dummies_train], axis=1)
+            X_copy.drop(columns=[col], inplace=True)
+
+        return X_copy
+
+dummies = GenerarDummies(columnas_multiple = ['WindGustDir_agr', 'WindDir9am_agr', 'WindDir3pm_agr'], columnas_simple= ['RainToday'])
+df_dummie = dummies.fit(df_viento2)
+df_dummie2 = df_viento.transform(df_viento2)
+df_dummie2.info()
+
+class CrearDiferenciasYEliminar(BaseEstimator, TransformerMixin):
+    def __init__(self, pares_columnas):
+        self.pares_columnas = pares_columnas
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X_copy = X.copy()
+        for col1, col2 in self.pares_columnas:
+            diff_col_name = f'{col1}_menos_{col2}'
+            X_copy[diff_col_name] = X_copy[col1] - X_copy[col2]
+            X_copy.drop(columns=[col1, col2], inplace=True)
+        return X_copy
+
+
+class DropColumns(BaseEstimator, TransformerMixin):
+    def __init__(self, variables):
+        self.variables = variables
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X_copy = X.copy()
+        X_copy.drop(columns=self.variables, inplace=True)
+        return X_copy
+
+ImputacionMedianaPorEstacion(x_train)
 
 # Cargar el pipeline entrenado de clasificación
 joblib_file = r'pipeline_clas.joblib'
