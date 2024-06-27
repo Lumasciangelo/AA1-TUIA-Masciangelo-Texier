@@ -198,6 +198,4 @@ if st.button('Predecir') and 'pipeline_entrenado_clas' in locals() and 'pipeline
         st.error(f"Ocurrió un error durante la predicción: {e}")
 
 
-# prediccion_reg = pipeline_entrenado_reg.predict(data_para_predecir)
-
 st.write(f"{'Predicción clasificación:', prediccion_clas}\n{'Predicción regresión:', prediccion_reg}")

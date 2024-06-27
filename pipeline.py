@@ -5,8 +5,7 @@ import pandas as pd
 from preprocesamiento import ImputacionMedianaPorEstacion, AgruparDireccionesViento, GenerarDummies, CrearDiferenciasYEliminar
 from preprocesamiento import DataProcessor, DropColumns, CrearDiferenciasYEliminar
 import joblib
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LogisticRegression, LinearRegressor
 
 # Usage
 df = pd.read_csv('weatherAUS.csv')  # Replace with the actual path to your CSV file
@@ -52,12 +51,12 @@ pipeline_regresion = Pipeline([
         ('dummies', GenerarDummies(columnas_multiple = ['WindGustDir_agr', 'WindDir9am_agr', 'WindDir3pm_agr'], columnas_simple= ['RainToday'])),
         ('diferencias', CrearDiferenciasYEliminar(pares_columnas=[('Pressure9am', 'Pressure3pm'), ('WindSpeed9am', 'WindSpeed3pm'), ('MaxTemp', 'MinTemp'), ('Temp3pm', 'Temp9am'), ('Humidity9am', 'Humidity3pm')])),
         ('estandarizar', StandardScaler()),
-        ('random_forest_regresion_optuna', RandomForestRegressor(n_estimators= 140, max_depth= 16, min_samples_split= 3, min_samples_leaf= 2, random_state=42))
+        ('regresionlineal', LinearRegressor())
     ])
     #return pipeline
     
 #modelo regresion
 pipeline_regresion.fit(x_train, y_train_regresion)
 
-joblib.dump(pipeline_regresion, 'pipeline_res.joblib')
+joblib.dump(pipeline_regresion, 'pipeline_reg.joblib')
 
