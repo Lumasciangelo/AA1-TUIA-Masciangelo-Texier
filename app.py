@@ -47,21 +47,6 @@ Location = st.selectbox('Location',['Albury', 'BadgerysCreek', 'Cobar', 'CoffsHa
        'Perth', 'SalmonGums', 'Walpole', 'Hobart', 'Launceston',
        'AliceSprings', 'Darwin', 'Katherine', 'Uluru'])
 RainToday = st.selectbox('Raintoday', ['Yes', 'No'])
-# WindGustDir_agr_N = st.multiselect('WindGustDir_agr_N', [1, 0])
-# WindGustDir_agr_S = st.multiselect('WindGustDir_agr_S', [1, 0])
-# WindGustDir_agr_W = st.multiselect('WindGustDir_agr_W', [1, 0])
-# WindDir9am_agr_N = st.multiselect('WindDir9am_agr_N', [1, 0])
-# WindDir9am_agr_S = st.multiselect('WindDir9am_agr_S', [1, 0])
-# WindDir9am_agr_W = st.multiselect('WindDir9am_agr_W', [1, 0])
-# WindDir3pm_agr_N = st.multiselect('WindDir3pm_agr_N', [1, 0])
-# WindDir3pm_agr_S = st.multiselect('WindDir3pm_agr_S', [1, 0])
-# WindDir3pm_agr_W = st.multiselect('WindDir3pm_agr_W', [1, 0])
-# RainToday_Yes = st.multiselect('RainToday_Yes', [1, 0])
-# Pressure9am_menos_Pressure3pm = st.slider('Pressure9am_menos_Pressure3pm', 0.0, 71.0, 21.7)
-# WindSpeed9am_menos_WindSpeed3pm = st.slider('WindSpeed9am_menos_WindSpeed3pm', 0.0, 130.0, 21.7)
-# MaxTemp_menos_MinTemp = st.slider('MaxTemp_menos_MinTemp', -8.5, 49.0, 21.7)
-# Temp3pm_menos_Temp9am = st.slider('Temp3pm_menos_Temp9am', -8.5, 49.0, 21.7)
-# Humidity9am_menos_Humidity3pm = st.slider('Humidity9am_menos_Humidity3pm', 0.0, 100.0, 50.7)
 
 # Crear un DataFrame con los datos ingresados por el usuario
 data_para_predecir = pd.DataFrame({
