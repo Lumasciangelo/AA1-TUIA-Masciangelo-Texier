@@ -108,7 +108,7 @@ class DataStreamlit:
         self.asignar_estacion('Date')
         
         return self.df
-    
+
 
 df = data_para_predecir  # Replace with the actual path to your CSV file
 processor = DataStreamlit(df)

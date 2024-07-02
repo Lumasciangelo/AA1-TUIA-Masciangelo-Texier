@@ -12,7 +12,6 @@ df = pd.read_csv('weatherAUS.csv')  # Replace with the actual path to your CSV f
 processor = DataProcessor(df)
 processed_df = processor.process()
 
-
 # Dividir el DataFrame en conjuntos de entrenamiento y prueba
 df_train = processed_df.loc[processed_df['Date'] < '2016-01-01']
 df_test = processed_df.loc[processed_df['Date'] >= '2016-01-01']
@@ -59,4 +58,3 @@ pipeline_regresion = Pipeline([
 pipeline_regresion.fit(x_train, y_train_regresion)
 
 joblib.dump(pipeline_regresion, 'pipeline_reg.joblib')
-
