@@ -38,15 +38,15 @@ El objetivo fue desarrollar un sistema completo de **predicción de lluvia en Au
 ### 3. Modelado
 #### 🔹 Regresión
 - **LinearRegression**.
-- Métodos con gradiente descendente.
-- Regularización: **Lasso, Ridge, Elastic Net**.
-- Métricas: R², MAE, RMSE, MAPE.
+  - Métodos con gradiente descendente.
+  - Regularización: **Lasso, Ridge, Elastic Net**.
+  - Métricas: R², MAE, RMSE, MAPE.
 
 #### 🔹 Clasificación
 - **LogisticRegression**.
-- Curvas ROC y elección de umbral.
-- Matrices de confusión y análisis de falsos positivos/negativos.
-- Métricas: Accuracy, Precision, Recall, F1 Score.
+  - Curvas ROC y elección de umbral.
+  - Matrices de confusión y análisis de falsos positivos/negativos.
+  - Métricas: Accuracy, Precision, Recall, F1 Score.
 
 #### 🔹 Modelos base y redes neuronales
 - Implementación de modelos baseline.
