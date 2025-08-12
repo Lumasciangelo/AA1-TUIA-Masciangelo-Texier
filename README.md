@@ -78,14 +78,17 @@ Se desarrolló una app en **Streamlit** que:
 ```bash
 git clone https://github.com/usuario/AA1-TUIA-Apellido1-Apellido2.git
 cd AA1-TUIA-Apellido1-Apellido2
+```
 
 ### 2. Instalar dependencias
 ```bash
 pip install -r requirements.txt
+```
 
 ### 3. Ejecutar la aplicación
 ```bash
 streamlit run app.py
+```
 
 ---
 
